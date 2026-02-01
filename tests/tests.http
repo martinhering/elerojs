@@ -1,0 +1,94 @@
+# elerojs API – sample requests (VS Code REST Client or similar)
+# Start server: npm start (default port 3000)
+@baseUrl = http://localhost:3000
+
+### List learned channels (runs easy_check if empty)
+GET {{baseUrl}}/channels
+
+### Get channel names (server-stored, shared by all clients)
+GET {{baseUrl}}/channels/names
+
+### Set channel names (replace entire map)
+PUT {{baseUrl}}/channels/names
+Content-Type: application/json
+
+{
+  "1": "Living room",
+  "2": "Kitchen",
+  "3": "Bedroom"
+}
+
+### Get schedule rules
+GET {{baseUrl}}/schedule/rules
+
+### Set schedule rules (example: close 1 h after sunset, open 1 h before sunrise not before 06:00, open at 07:00)
+PUT {{baseUrl}}/schedule/rules
+Content-Type: application/json
+
+[
+  { "channel": 1, "action": "bottom", "trigger": "after_sunset", "offsetMinutes": 60 },
+  { "channel": 1, "action": "top", "trigger": "before_sunrise", "offsetMinutes": -60, "minTime": "06:00" },
+  { "channel": 1, "action": "top", "trigger": "at_time", "time": "07:00" }
+]
+
+### Get today sun times (requires LATITUDE and LONGITUDE)
+GET {{baseUrl}}/schedule/sun
+
+### Get status for channel 1 (requests from stick if unknown)
+GET {{baseUrl}}/channels/1
+
+### Get status for channel 1 (alternate path)
+GET {{baseUrl}}/channels/1/status
+
+### Send command: move to top (open)
+POST {{baseUrl}}/channels/9/command
+Content-Type: application/json
+
+{
+  "action": "top"
+}
+
+### Send command: move to bottom (closed)
+POST {{baseUrl}}/channels/9/command
+Content-Type: application/json
+
+{
+  "action": "bottom"
+}
+
+### Send command: stop
+POST {{baseUrl}}/channels/1/command
+Content-Type: application/json
+
+{
+  "action": "stop"
+}
+
+### Send command: intermediate position
+POST {{baseUrl}}/channels/1/command
+Content-Type: application/json
+
+{
+  "action": "intermediate"
+}
+
+### Send command: tilt position
+POST {{baseUrl}}/channels/1/command
+Content-Type: application/json
+
+{
+  "action": "tilt"
+}
+
+### Get status for channel 2 (change :id for your channel)
+GET {{baseUrl}}/channels/2/status
+
+### Send command on channel 2: move to top
+POST {{baseUrl}}/channels/2/command
+Content-Type: application/json
+
+{
+  "action": "top"
+}
+
+# WebSocket: connect to ws://localhost:3000/ws for live state updates (use a WS client, not this file).

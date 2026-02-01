@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE (optional – uncomment if you want to ignore)
+# .idea/
+# .vscode/
+# *.swp
+# *.swo

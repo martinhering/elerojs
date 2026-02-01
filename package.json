@@ -1,0 +1,20 @@
+{
+  "name": "elerojs",
+  "version": "1.0.0",
+  "description": "HTTP/WebSocket server for Elero USB Transmitter Stick (blinds and switches)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "serialport": "^12.0.0",
+    "suncalc": "^1.9.0",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

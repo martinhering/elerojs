@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Elero Blinds</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #fff;
+      --text: #111;
+      --text-muted: #666;
+      --border: #ccc;
+      --btn-bg: #f5f5f5;
+      --btn-bg-active: #e0e0e0;
+      --error: #c00;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1a1a1a;
+        --text: #eee;
+        --text-muted: #aaa;
+        --border: #444;
+        --btn-bg: #333;
+        --btn-bg-active: #444;
+        --error: #f66;
+      }
+    }
+    [data-theme="dark"] {
+      --bg: #1a1a1a;
+      --text: #eee;
+      --text-muted: #aaa;
+      --border: #444;
+      --btn-bg: #333;
+      --btn-bg-active: #444;
+      --error: #f66;
+    }
+    [data-theme="light"] {
+      --bg: #fff;
+      --text: #111;
+      --text-muted: #666;
+      --border: #ccc;
+      --btn-bg: #f5f5f5;
+      --btn-bg-active: #e0e0e0;
+      --error: #c00;
+    }
+    body {
+      margin: 0;
+      padding: 1rem;
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.5rem; margin: 0; }
+    .theme-toggle {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: 1.25rem;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .theme-toggle:active { background: var(--btn-bg-active); }
+    .channels { display: flex; flex-direction: column; gap: 0.75rem; }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .label {
+      min-width: 5rem;
+      font-weight: 500;
+    }
+    .status {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      min-width: 8rem;
+    }
+    .buttons { display: flex; gap: 0.5rem; flex: 1; }
+    button {
+      min-height: 48px;
+      min-width: 48px;
+      padding: 0.5rem 1rem;
+      font-size: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active { background: var(--btn-bg-active); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.up { flex: 1; }
+    button.down { flex: 1; }
+    button.stop { flex: 0 0 auto; }
+    .message {
+      padding: 1rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .disconnected .message { color: var(--error); }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .names-panel {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+    }
+    .names-panel.open { display: block; }
+    .names-panel h2 { font-size: 1rem; margin: 0 0 0.75rem 0; }
+    .names-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .names-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .names-row label { min-width: 5rem; font-size: 0.9375rem; }
+    .names-row input {
+      flex: 1;
+      min-height: 44px;
+      padding: 0.5rem;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .names-done { min-height: 44px; padding: 0 1rem; }
+    .schedule-panel {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+    }
+    .schedule-panel.open { display: block; }
+    .schedule-panel h2 { font-size: 1rem; margin: 0 0 0.75rem 0; }
+    .schedule-sun { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .schedule-rules-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .schedule-rule-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+    }
+    .schedule-rule-desc { flex: 1; font-size: 0.9375rem; }
+    .schedule-rule-delete { min-height: 36px; padding: 0 0.75rem; font-size: 0.875rem; }
+    .schedule-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .schedule-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .schedule-form-row label { min-width: 5rem; font-size: 0.9375rem; }
+    .schedule-form select,
+    .schedule-form input[type="number"],
+    .schedule-form input[type="time"] {
+      min-height: 44px;
+      padding: 0.5rem;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .schedule-form input[type="number"] { width: 5rem; }
+    .schedule-add { min-height: 44px; padding: 0 1rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Elero Blinds</h1>
+    <div class="header-actions">
+      <button type="button" class="schedule-toggle" id="scheduleToggle" title="Schedule rules" aria-label="Schedule">Schedule</button>
+      <button type="button" class="names-toggle" id="namesToggle" title="Edit channel names" aria-label="Edit channel names">Names</button>
+      <button type="button" class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">&#9789;</button>
+    </div>
+  </div>
+  <div id="schedulePanel" class="schedule-panel" aria-hidden="true">
+    <h2>Schedule</h2>
+    <div class="schedule-sun" id="scheduleSun"></div>
+    <div class="schedule-rules-list" id="scheduleRulesList"></div>
+    <div class="schedule-form">
+      <div class="schedule-form-row">
+        <label>Channel</label>
+        <select id="scheduleChannel">
+          <option value="">—</option>
+        </select>
+      </div>
+      <div class="schedule-form-row">
+        <label>Action</label>
+        <select id="scheduleAction">
+          <option value="top">Open</option>
+          <option value="bottom">Close</option>
+        </select>
+      </div>
+      <div class="schedule-form-row" id="scheduleTriggerRow">
+        <label>Trigger</label>
+        <select id="scheduleTrigger">
+          <option value="after_sunset">After sunset</option>
+          <option value="before_sunrise">Before sunrise</option>
+          <option value="at_time">At time</option>
+        </select>
+        <span id="scheduleOffsetWrap">
+          <input type="number" id="scheduleOffset" value="60" min="-720" max="720" step="15" title="Minutes">
+          <span style="font-size:0.875rem;color:var(--text-muted)">min</span>
+        </span>
+        <input type="time" id="scheduleAtTime" style="display:none">
+      </div>
+      <div id="scheduleMinMaxWrap">
+        <div class="schedule-form-row">
+          <label>Not before</label>
+          <input type="time" id="scheduleMinTime" placeholder="06:00">
+        </div>
+        <div class="schedule-form-row">
+          <label>Not after</label>
+          <input type="time" id="scheduleMaxTime" placeholder="22:00">
+        </div>
+      </div>
+      <button type="button" class="schedule-add" id="scheduleAdd">Add rule</button>
+    </div>
+    <button type="button" class="names-done" id="scheduleDone">Done</button>
+  </div>
+  <div id="namesPanel" class="names-panel" aria-hidden="true">
+    <h2>Channel names</h2>
+    <div class="names-list"></div>
+    <button type="button" class="names-done">Done</button>
+  </div>
+  <div id="root">
+    <div class="message">Connecting…</div>
+  </div>
+
+  <script>
+    const root = document.getElementById('root');
+    let channels = [];
+    let status = {};
+    let ws = null;
+    let reconnectTimer = null;
+    const RECONNECT_DELAY_MS = 3000;
+    let channelNamesMap = {};
+
+    function getChannelNames() {
+      return { ...channelNamesMap };
+    }
+
+    function channelLabel(ch) {
+      return channelNamesMap[String(ch)] || 'Channel ' + ch;
+    }
+
+    async function fetchChannelNames() {
+      try {
+        const res = await fetch('/channels/names');
+        if (res.ok) channelNamesMap = await res.json();
+      } catch {
+        channelNamesMap = {};
+      }
+    }
+
+    async function saveChannelNamesToServer(names) {
+      try {
+        const res = await fetch('/channels/names', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(names),
+        });
+        if (res.ok) channelNamesMap = await res.json();
+      } catch (err) {
+        console.error('Failed to save channel names:', err);
+      }
+    }
+
+    function wsUrl() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return proto + '//' + location.host + '/ws';
+    }
+
+    function render() {
+      if (channels.length === 0) {
+        root.innerHTML = '<div class="message">No channels learned. Waiting for stick…</div>';
+        return;
+      }
+      root.innerHTML = '<div class="channels"></div>';
+      const container = root.querySelector('.channels');
+      for (const ch of channels) {
+        const s = status[ch];
+        const semantic = s ? s.semantic : '—';
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.dataset.channel = String(ch);
+        row.innerHTML = `
+          <span class="label">${channelLabel(ch)}</span>
+          <span class="status" data-channel="${ch}">${semantic}</span>
+          <div class="buttons">
+            <button class="up" type="button" data-channel="${ch}" data-action="top">Up</button>
+            <button class="stop" type="button" data-channel="${ch}" data-action="stop">Stop</button>
+            <button class="down" type="button" data-channel="${ch}" data-action="bottom">Down</button>
+          </div>
+        `;
+        container.appendChild(row);
+      }
+      root.querySelectorAll('button[data-channel][data-action]').forEach(btn => {
+        btn.addEventListener('click', onCommand);
+      });
+    }
+
+    function updateStatus(ch, s) {
+      status[ch] = s;
+      const el = root.querySelector(`.status[data-channel="${ch}"]`);
+      if (el) el.textContent = s.semantic;
+    }
+
+    async function onCommand(e) {
+      const btn = e.currentTarget;
+      const ch = btn.dataset.channel;
+      const action = btn.dataset.action;
+      if (!ch || !action) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/channels/${ch}/command`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      } catch (err) {
+        console.error(err);
+      }
+      setTimeout(() => { btn.disabled = false; }, 400);
+    }
+
+    function connect() {
+      ws = new WebSocket(wsUrl());
+      ws.onopen = () => {
+        root.classList.remove('disconnected');
+        root.querySelector('.message')?.remove();
+      };
+      ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'state') {
+          channels = data.channels || [];
+          status = data.status || {};
+          await fetchChannelNames();
+          render();
+          const namesToggle = document.getElementById('namesToggle');
+          if (namesToggle) namesToggle.disabled = channels.length === 0;
+          const scheduleToggle = document.getElementById('scheduleToggle');
+          if (scheduleToggle) scheduleToggle.disabled = channels.length === 0;
+        } else if (data.channel != null && data.status) {
+          updateStatus(data.channel, data.status);
+        }
+      };
+      ws.onclose = () => {
+        if (!root.querySelector('.channels')) {
+          root.innerHTML = '<div class="message">Disconnected. Reconnecting…</div>';
+          root.classList.add('disconnected');
+        }
+        reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
+      };
+      ws.onerror = () => {};
+    }
+
+    connect();
+
+    (function initSchedule() {
+      const panel = document.getElementById('schedulePanel');
+      const toggle = document.getElementById('scheduleToggle');
+      const sunEl = document.getElementById('scheduleSun');
+      const rulesList = document.getElementById('scheduleRulesList');
+      const channelSelect = document.getElementById('scheduleChannel');
+      const actionSelect = document.getElementById('scheduleAction');
+      const triggerSelect = document.getElementById('scheduleTrigger');
+      const offsetInput = document.getElementById('scheduleOffset');
+      const offsetWrap = document.getElementById('scheduleOffsetWrap');
+      const atTimeInput = document.getElementById('scheduleAtTime');
+      const minMaxWrap = document.getElementById('scheduleMinMaxWrap');
+      const minTimeInput = document.getElementById('scheduleMinTime');
+      const maxTimeInput = document.getElementById('scheduleMaxTime');
+      const addBtn = document.getElementById('scheduleAdd');
+      const doneBtn = document.getElementById('scheduleDone');
+      if (!panel || !toggle) return;
+
+      function updateTriggerVisibility() {
+        const trigger = triggerSelect.value || 'after_sunset';
+        if (trigger === 'at_time') {
+          if (offsetWrap) offsetWrap.style.display = 'none';
+          if (atTimeInput) atTimeInput.style.display = '';
+          if (minMaxWrap) minMaxWrap.style.display = 'none';
+        } else {
+          if (offsetWrap) offsetWrap.style.display = '';
+          if (atTimeInput) atTimeInput.style.display = 'none';
+          if (minMaxWrap) minMaxWrap.style.display = '';
+        }
+      }
+
+      let scheduleRules = [];
+
+      function ruleDesc(rule) {
+        const ch = channelLabel(rule.channel);
+        const act = rule.action === 'top' ? 'Open' : 'Close';
+        let s;
+        if (rule.trigger === 'at_time' && rule.time) {
+          s = ch + ' → ' + act + ' at ' + rule.time;
+        } else {
+          const offset = rule.offsetMinutes ?? 0;
+          const abs = Math.abs(offset);
+          const h = Math.floor(abs / 60);
+          const m = abs % 60;
+          const timeStr = h ? (m ? h + ' h ' + m + ' min' : h + ' h') : (m + ' min');
+          const dir = offset >= 0 ? 'after' : 'before';
+          const ev = rule.trigger === 'after_sunset' ? 'sunset' : 'sunrise';
+          s = ch + ' → ' + act + ' ' + timeStr + ' ' + dir + ' ' + ev;
+        }
+        if (rule.minTime) s += ', not before ' + rule.minTime;
+        if (rule.maxTime) s += ', not after ' + rule.maxTime;
+        return s;
+      }
+
+      async function fetchSun() {
+        if (!sunEl) return;
+        try {
+          const res = await fetch('/schedule/sun');
+          if (res.ok) {
+            const data = await res.json();
+            const sunrise = new Date(data.sunrise);
+            const sunset = new Date(data.sunset);
+            sunEl.textContent = 'Today: sunrise ' + sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', sunset ' + sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } else {
+            sunEl.textContent = 'Set LATITUDE and LONGITUDE to enable sun-based schedules.';
+          }
+        } catch {
+          sunEl.textContent = '';
+        }
+      }
+
+      async function fetchRules() {
+        try {
+          const res = await fetch('/schedule/rules');
+          if (res.ok) scheduleRules = await res.json();
+          else scheduleRules = [];
+        } catch {
+          scheduleRules = [];
+        }
+      }
+
+      function renderRulesList() {
+        rulesList.innerHTML = '';
+        for (const rule of scheduleRules) {
+          const row = document.createElement('div');
+          row.className = 'schedule-rule-row';
+          row.dataset.ruleId = rule.id;
+          row.innerHTML = '<span class="schedule-rule-desc">' + ruleDesc(rule) + '</span><button type="button" class="schedule-rule-delete">Delete</button>';
+          row.querySelector('button').addEventListener('click', () => {
+            scheduleRules = scheduleRules.filter((r) => r.id !== rule.id);
+            saveRules();
+            renderRulesList();
+          });
+          rulesList.appendChild(row);
+        }
+      }
+
+      async function saveRules() {
+        try {
+          const res = await fetch('/schedule/rules', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(scheduleRules),
+          });
+          if (res.ok) scheduleRules = await res.json();
+        } catch (err) {
+          console.error('Failed to save schedule rules:', err);
+        }
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        channelSelect.innerHTML = '<option value="">—</option>';
+        for (const ch of channels) {
+          const opt = document.createElement('option');
+          opt.value = String(ch);
+          opt.textContent = channelLabel(ch);
+          channelSelect.appendChild(opt);
+        }
+        updateTriggerVisibility();
+        fetchSun();
+        fetchRules().then(() => renderRulesList());
+      }
+
+      addBtn.addEventListener('click', async () => {
+        const ch = parseInt(channelSelect.value, 10);
+        if (!ch || ch < 1 || ch > 15) return;
+        const action = actionSelect.value || 'top';
+        const trigger = triggerSelect.value || 'after_sunset';
+        const minTime = minTimeInput.value ? minTimeInput.value : undefined;
+        const maxTime = maxTimeInput.value ? maxTimeInput.value : undefined;
+        const rule = { id: crypto.randomUUID(), channel: ch, action, trigger, minTime: minTime || undefined, maxTime: maxTime || undefined };
+        if (trigger === 'at_time') {
+          const timeVal = atTimeInput ? atTimeInput.value : '';
+          if (!timeVal || !/^\d{1,2}:\d{2}$/.test(timeVal)) return;
+          rule.time = timeVal;
+        } else {
+          const offsetMinutes = parseInt(offsetInput.value, 10);
+          if (!Number.isInteger(offsetMinutes)) return;
+          rule.offsetMinutes = offsetMinutes;
+        }
+        scheduleRules.push(rule);
+        await saveRules();
+        renderRulesList();
+      });
+
+      doneBtn.addEventListener('click', () => {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+      });
+
+      triggerSelect.addEventListener('change', updateTriggerVisibility);
+
+      toggle.addEventListener('click', () => {
+        if (panel.classList.contains('open')) {
+          panel.classList.remove('open');
+          panel.setAttribute('aria-hidden', 'true');
+        } else {
+          openPanel();
+        }
+      });
+    })();
+
+    (function initNames() {
+      const panel = document.getElementById('namesPanel');
+      const toggle = document.getElementById('namesToggle');
+      if (!panel || !toggle) return;
+
+      function updateMainListLabels() {
+        const names = getChannelNames();
+        root.querySelectorAll('.row[data-channel]').forEach(row => {
+          const ch = row.dataset.channel;
+          const labelEl = row.querySelector('.label');
+          if (labelEl) labelEl.textContent = names[ch] || 'Channel ' + ch;
+        });
+      }
+
+      function buildNamesFromPanel() {
+        const names = {};
+        panel.querySelectorAll('.names-list input').forEach(input => {
+          const ch = input.dataset.channel;
+          const v = (input.value || '').trim();
+          if (ch) names[ch] = v;
+        });
+        return names;
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        const list = panel.querySelector('.names-list');
+        list.innerHTML = '';
+        const names = getChannelNames();
+        for (const ch of channels) {
+          const row = document.createElement('div');
+          row.className = 'names-row';
+          row.innerHTML = `<label>Channel ${ch}</label><input type="text" data-channel="${ch}" placeholder="Name">`;
+          const input = row.querySelector('input');
+          input.value = names[String(ch)] || '';
+          input.addEventListener('blur', async () => {
+            const map = buildNamesFromPanel();
+            await saveChannelNamesToServer(map);
+            updateMainListLabels();
+          });
+          list.appendChild(row);
+        }
+        panel.querySelector('.names-done').onclick = async () => {
+          const map = buildNamesFromPanel();
+          await saveChannelNamesToServer(map);
+          updateMainListLabels();
+          panel.classList.remove('open');
+          panel.setAttribute('aria-hidden', 'true');
+        };
+      }
+
+      toggle.addEventListener('click', async () => {
+        if (panel.classList.contains('open')) {
+          const map = buildNamesFromPanel();
+          await saveChannelNamesToServer(map);
+          updateMainListLabels();
+          panel.classList.remove('open');
+          panel.setAttribute('aria-hidden', 'true');
+        } else {
+          if (channels.length === 0) return;
+          openPanel();
+        }
+      });
+    })();
+
+    (function initTheme() {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'dark' || stored === 'light') {
+        document.documentElement.setAttribute('data-theme', stored);
+      }
+      const btn = document.getElementById('themeToggle');
+      if (!btn) return;
+      function isDark() {
+        return document.documentElement.getAttribute('data-theme') === 'dark' ||
+          (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+      function updateIcon() {
+        btn.textContent = isDark() ? '\u2600' : '\u263e';
+      }
+      updateIcon();
+      btn.addEventListener('click', () => {
+        const next = isDark() ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateIcon();
+      });
+    })();
+  </script>
+</body>
+</html>
