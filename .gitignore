@@ -45,3 +45,6 @@ Thumbs.db
 # .vscode/
 # *.swp
 # *.swo
+
+scheduleRules.json
+channel-names.json
