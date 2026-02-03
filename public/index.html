@@ -96,6 +96,13 @@
       font-size: 0.875rem;
       color: var(--text-muted);
     }
+    @media (max-width: 768px) {
+      .channel-info {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+      }
+    }
     .buttons { display: flex; gap: 0.5rem; flex: 1; }
     button {
       min-height: 48px;
@@ -396,6 +403,29 @@
       if (btn) btn.remove();
     }
 
+    function needsTapToConnect() {
+      if (navigator.standalone === true) return true;
+      return /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+    }
+
+    function addTapToConnectButton() {
+      if (document.getElementById('tapToConnectBtn')) return;
+      const msg = root.querySelector('.message');
+      if (!msg || root.querySelector('.channels')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'tapToConnectBtn';
+      btn.className = 'tap-to-connect';
+      btn.textContent = 'Tap to connect';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+        connect();
+      });
+      msg.after(btn);
+    }
+
     function connect() {
       clearConnectPrompt();
       if (ws && (ws.readyState === 0 || ws.readyState === 1)) {
@@ -432,25 +462,15 @@
       ws.onerror = () => {};
     }
 
-    connect();
-
-    connectPromptTimer = setTimeout(() => {
-      connectPromptTimer = null;
-      if (root.querySelector('.message') && !root.querySelector('.channels') && !document.getElementById('tapToConnectBtn')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'tapToConnectBtn';
-        btn.className = 'tap-to-connect';
-        btn.textContent = 'Tap to connect';
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (reconnectTimer) clearTimeout(reconnectTimer);
-          reconnectTimer = null;
-          connect();
-        });
-        root.querySelector('.message')?.after(btn);
-      }
-    }, TAP_TO_CONNECT_AFTER_MS);
+    if (needsTapToConnect()) {
+      addTapToConnectButton();
+    } else {
+      connect();
+      connectPromptTimer = setTimeout(() => {
+        connectPromptTimer = null;
+        addTapToConnectButton();
+      }, TAP_TO_CONNECT_AFTER_MS);
+    }
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && (!ws || ws.readyState !== 1) && !root.querySelector('.channels')) {
