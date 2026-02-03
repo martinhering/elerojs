@@ -179,11 +179,20 @@ export function createApp(options) {
   if (wsEnable) {
     wss = new WebSocketServer({ noServer: true });
     server.on('upgrade', (request, socket, head) => {
-      const path = new URL(request.url ?? '', `http://${request.headers.host}`).pathname;
-      if (path === '/ws') {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-          wss.emit('connection', ws, request);
+      const host = request.headers.host || 'localhost';
+      const pathname = new URL(request.url ?? '', `http://${host}`).pathname.replace(/\/+$/, '') || '/';
+      if (pathname.toLowerCase() === '/ws') {
+        socket.on('error', (err) => {
+          console.error('WebSocket upgrade socket error:', err.message);
         });
+        try {
+          wss.handleUpgrade(request, socket, head, (ws) => {
+            wss.emit('connection', ws, request);
+          });
+        } catch (err) {
+          console.error('WebSocket handleUpgrade error:', err.message);
+          socket.destroy();
+        }
       } else {
         socket.destroy();
       }
@@ -199,9 +208,16 @@ export function createApp(options) {
 
     wss.on('connection', (ws) => {
       clients.add(ws);
+      const remove = () => {
+        clients.delete(ws);
+      };
+      ws.on('close', remove);
+      ws.on('error', remove);
       const full = stateRef.getFullState();
-      ws.send(JSON.stringify({ type: 'state', ...full }));
-      ws.on('close', () => clients.delete(ws));
+      const payload = JSON.stringify({ type: 'state', ...full });
+      setImmediate(() => {
+        if (ws.readyState === 1) ws.send(payload);
+      });
     });
   }
 
