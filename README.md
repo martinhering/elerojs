@@ -4,7 +4,7 @@ HTTP/WebSocket server for the **Elero USB Transmitter Stick**, to control Elero 
 
 ## Prerequisites
 
-- **Node.js 18+**
+- **Node.js 16+**
 - Elero USB Transmitter Stick connected (appears as a serial port, e.g. `/dev/ttyUSB0` on Linux, `COM3` on Windows)
 
 ## Configuration
