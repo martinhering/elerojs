@@ -18,6 +18,7 @@ Optional (defaults in parentheses):
 - **HTTP_PORT** – Port for the HTTP API (default: `3000`)
 - **WS_ENABLE** – Enable WebSocket at `/ws` (default: `true`)
 - **COMMAND_DELAY_MS** – Delay in ms between queued commands (default: `500`)
+- **SERIAL_OPEN_DELAY_MS** – Delay in ms after opening the serial port before sending commands (default: `2000`). Use this if the stick stalls or is slow to respond after server restart.
 - **LATITUDE** / **LONGITUDE** – GPS coordinates for sunrise/sunset (optional; required for schedule rules). Alternatively **GEO_LOCATION** = `lat,lon` (e.g. `52.52,13.405`).
 
 You can set these in a **`.env`** file in the project root (loaded automatically). Example:

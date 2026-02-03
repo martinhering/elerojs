@@ -28,6 +28,8 @@ import { createApp } from './api.js';
 const DEFAULT_HTTP_PORT = 3000;
 const DEFAULT_WS_ENABLE = true;
 const DEFAULT_COMMAND_DELAY_MS = 500;
+/** Delay (ms) after opening serial port before first command; helps avoid stick stalling on cold start */
+const DEFAULT_SERIAL_OPEN_DELAY_MS = 2000;
 
 function getConfig() {
   const serialPort = process.env.SERIAL_PORT;
@@ -39,6 +41,10 @@ function getConfig() {
   const wsEnable = process.env.WS_ENABLE !== 'false' && process.env.WS_ENABLE !== '0';
   const commandDelayMs = parseInt(
     process.env.COMMAND_DELAY_MS ?? String(DEFAULT_COMMAND_DELAY_MS),
+    10
+  );
+  const serialOpenDelayMs = parseInt(
+    process.env.SERIAL_OPEN_DELAY_MS ?? String(DEFAULT_SERIAL_OPEN_DELAY_MS),
     10
   );
   let latitude = null;
@@ -64,7 +70,11 @@ function getConfig() {
       }
     }
   }
-  return { serialPort, httpPort, wsEnable, commandDelayMs, latitude, longitude };
+  return { serialPort, httpPort, wsEnable, commandDelayMs, serialOpenDelayMs, latitude, longitude };
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function main() {
@@ -72,13 +82,11 @@ async function main() {
   stick.setCommandDelayMs(config.commandDelayMs);
 
   await serial.open(config.serialPort);
-  stick.start();
-
-  try {
-    await stick.easyCheck();
-  } catch (err) {
-    console.warn('Initial easy_check failed (will retry on first GET /channels):', err.message);
+  if (config.serialOpenDelayMs > 0) {
+    console.log(`Waiting ${config.serialOpenDelayMs} ms for serial device to settle…`);
+    await delay(config.serialOpenDelayMs);
   }
+  stick.start();
 
   const { server } = createApp({
     stick,
@@ -92,6 +100,15 @@ async function main() {
     console.log(`elerojs listening on http://localhost:${config.httpPort}`);
     if (config.wsEnable) console.log('WebSocket available at ws://localhost:' + config.httpPort + '/ws');
     scheduler.start(stick, scheduleRules, config.latitude, config.longitude);
+    // Run initial easy_check in background so server is responsive; GET /channels will retry if empty
+    (async () => {
+      try {
+        await stick.easyCheck();
+        console.log('Stick ready; channels discovered.');
+      } catch (err) {
+        console.warn('Initial easy_check failed (will retry on first GET /channels):', err.message);
+      }
+    })();
   });
 
   function shutdown() {

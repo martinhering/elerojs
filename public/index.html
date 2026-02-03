@@ -120,6 +120,20 @@
       text-align: center;
     }
     .disconnected .message { color: var(--error); }
+    .tap-to-connect {
+      display: block;
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tap-to-connect:active { background: var(--btn-bg-active); }
     .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     .names-panel {
       display: none;
@@ -278,7 +292,9 @@
     let ws = null;
     let reconnectTimer = null;
     const RECONNECT_DELAY_MS = 3000;
+    const TAP_TO_CONNECT_AFTER_MS = 5000;
     let channelNamesMap = {};
+    let connectPromptTimer = null;
 
     function getChannelNames() {
       return { ...channelNamesMap };
@@ -371,11 +387,25 @@
       setTimeout(() => { btn.disabled = false; }, 400);
     }
 
+    function clearConnectPrompt() {
+      if (connectPromptTimer) {
+        clearTimeout(connectPromptTimer);
+        connectPromptTimer = null;
+      }
+      const btn = document.getElementById('tapToConnectBtn');
+      if (btn) btn.remove();
+    }
+
     function connect() {
+      clearConnectPrompt();
+      if (ws && (ws.readyState === 0 || ws.readyState === 1)) {
+        try { ws.close(); } catch (_) {}
+      }
       ws = new WebSocket(wsUrl());
       ws.onopen = () => {
         root.classList.remove('disconnected');
         root.querySelector('.message')?.remove();
+        document.getElementById('tapToConnectBtn')?.remove();
       };
       ws.onmessage = async (event) => {
         const data = JSON.parse(event.data);
@@ -403,6 +433,31 @@
     }
 
     connect();
+
+    connectPromptTimer = setTimeout(() => {
+      connectPromptTimer = null;
+      if (root.querySelector('.message') && !root.querySelector('.channels') && !document.getElementById('tapToConnectBtn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'tapToConnectBtn';
+        btn.className = 'tap-to-connect';
+        btn.textContent = 'Tap to connect';
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+          connect();
+        });
+        root.querySelector('.message')?.after(btn);
+      }
+    }, TAP_TO_CONNECT_AFTER_MS);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && (!ws || ws.readyState !== 1) && !root.querySelector('.channels')) {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        connect();
+      }
+    });
 
     (function initSchedule() {
       const panel = document.getElementById('schedulePanel');
