@@ -260,6 +260,18 @@
   </div>
 
   <script>
+    function randomUUID() {
+      const c = typeof crypto !== 'undefined' ? crypto : (typeof window !== 'undefined' ? window.crypto : null);
+      if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+      if (!c || !c.getRandomValues) return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, () => ((Math.random() * 16) | 0).toString(16));
+      const bytes = new Uint8Array(16);
+      c.getRandomValues(bytes);
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
     const root = document.getElementById('root');
     let channels = [];
     let status = {};
@@ -524,7 +536,7 @@
         const trigger = triggerSelect.value || 'after_sunset';
         const minTime = minTimeInput.value ? minTimeInput.value : undefined;
         const maxTime = maxTimeInput.value ? maxTimeInput.value : undefined;
-        const rule = { id: crypto.randomUUID(), channel: ch, action, trigger, minTime: minTime || undefined, maxTime: maxTime || undefined };
+        const rule = { id: randomUUID(), channel: ch, action, trigger, minTime: minTime || undefined, maxTime: maxTime || undefined };
         if (trigger === 'at_time') {
           const timeVal = atTimeInput ? atTimeInput.value : '';
           if (!timeVal || !/^\d{1,2}:\d{2}$/.test(timeVal)) return;
