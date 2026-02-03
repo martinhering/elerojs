@@ -43,6 +43,16 @@ set SERIAL_PORT=COM3
 npm start
 ```
 
+### Running with PM2
+
+For production or long-running use, run elerojs with [PM2](https://pm2.keymetrics.io/). An ecosystem config is included.
+
+1. Install PM2 (optional): `npm install -g pm2`
+2. Edit **ecosystem.config.cjs** and set **SERIAL_PORT** (and optionally **LATITUDE** / **LONGITUDE** for sun-based schedule rules).
+3. Start: `pm2 start ecosystem.config.cjs`
+
+Useful commands: `pm2 status`, `pm2 logs elerojs`, `pm2 restart elerojs`, `pm2 stop elerojs`.
+
 A phone-friendly web UI is available at `http://<host>:3000/` when the server is running (Up/Down/Stop per channel, channel names, schedule rules, live status over WebSocket). Schedule rules (e.g. "close 1 h after sunset", "open 1 h before sunrise but not before 6 am", or "at 07:00" / "at 22:30") are configured in the web UI and stored in `schedule-rules.json`; set **LATITUDE** and **LONGITUDE** (or **GEO_LOCATION**) so the server can compute sunrise/sunset.
 
 ## API
