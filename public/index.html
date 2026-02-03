@@ -417,27 +417,21 @@
       btn.id = 'tapToConnectBtn';
       btn.className = 'tap-to-connect';
       btn.textContent = 'Tap to connect';
-      function doConnect(e) {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
         if (reconnectTimer) clearTimeout(reconnectTimer);
         reconnectTimer = null;
         connect();
-      }
-      btn.addEventListener('touchend', doConnect, { passive: false });
-      btn.addEventListener('click', doConnect);
+      });
       msg.after(btn);
     }
 
     function connect() {
+      clearConnectPrompt();
       if (ws && (ws.readyState === 0 || ws.readyState === 1)) {
         try { ws.close(); } catch (_) {}
       }
       ws = new WebSocket(wsUrl());
-      clearConnectPrompt();
       ws.onopen = () => {
         root.classList.remove('disconnected');
         root.querySelector('.message')?.remove();
