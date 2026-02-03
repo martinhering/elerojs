@@ -53,6 +53,29 @@ For production or long-running use, run elerojs with [PM2](https://pm2.keymetric
 
 Useful commands: `pm2 status`, `pm2 logs elerojs`, `pm2 restart elerojs`, `pm2 stop elerojs`.
 
+**Linux: "Permission denied" on the serial port**  
+The serial device is often only writable by root or the `dialout` group. If adding your user to `dialout` and logging out/in didn’t help (e.g. when using PM2), use a **udev rule** so the device is accessible when plugged in:
+
+1. Create a udev rule (adjust the path if your stick uses a different name, e.g. `ttyACM0`):
+
+```bash
+echo 'KERNEL=="ttyUSB[0-9]*", MODE="0666"' | sudo tee /etc/udev/rules.d/99-elero-serial.rules
+```
+
+2. Reload udev and reapply rules (then unplug and replug the stick if needed):
+
+```bash
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+3. Ensure PM2 runs as your user (so it sees the same permissions). Start it **without** `sudo`:
+
+```bash
+pm2 start ecosystem.config.cjs
+```
+
+If your device appears as `ttyACM0` (e.g. some USB serial chips), use `KERNEL=="ttyACM[0-9]*", MODE="0666"` in the rule instead.
+
 A phone-friendly web UI is available at `http://<host>:3000/` when the server is running (Up/Down/Stop per channel, channel names, schedule rules, live status over WebSocket). Schedule rules (e.g. "close 1 h after sunset", "open 1 h before sunrise but not before 6 am", or "at 07:00" / "at 22:30") are configured in the web UI and stored in `schedule-rules.json`; set **LATITUDE** and **LONGITUDE** (or **GEO_LOCATION**) so the server can compute sunrise/sunset.
 
 ## API

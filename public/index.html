@@ -83,14 +83,18 @@
       gap: 0.5rem;
       flex-wrap: wrap;
     }
-    .label {
-      min-width: 5rem;
+    .channel-info {
+      display: flex;
+      flex-direction: column;
+      width: 12rem;
+      min-width: 12rem;
+    }
+    .channel-info .label {
       font-weight: 500;
     }
-    .status {
+    .channel-info .status {
       font-size: 0.875rem;
       color: var(--text-muted);
-      min-width: 8rem;
     }
     .buttons { display: flex; gap: 0.5rem; flex: 1; }
     button {
@@ -313,8 +317,10 @@
         row.className = 'row';
         row.dataset.channel = String(ch);
         row.innerHTML = `
-          <span class="label">${channelLabel(ch)}</span>
-          <span class="status" data-channel="${ch}">${semantic}</span>
+          <div class="channel-info">
+            <span class="label">${channelLabel(ch)}</span>
+            <span class="status" data-channel="${ch}">${semantic}</span>
+          </div>
           <div class="buttons">
             <button class="up" type="button" data-channel="${ch}" data-action="top">Up</button>
             <button class="stop" type="button" data-channel="${ch}" data-action="stop">Stop</button>
