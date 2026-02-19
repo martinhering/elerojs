@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Elero Blinds – Control (AJAX)</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #fff;
+      --text: #111;
+      --text-muted: #666;
+      --border: #ccc;
+      --btn-bg: #f5f5f5;
+      --btn-bg-active: #e0e0e0;
+      --error: #c00;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1a1a1a;
+        --text: #eee;
+        --text-muted: #aaa;
+        --border: #444;
+        --btn-bg: #333;
+        --btn-bg-active: #444;
+        --error: #f66;
+      }
+    }
+    [data-theme="dark"] { --bg: #1a1a1a; --text: #eee; --text-muted: #aaa; --border: #444; --btn-bg: #333; --btn-bg-active: #444; --error: #f66; }
+    [data-theme="light"] { --bg: #fff; --text: #111; --text-muted: #666; --border: #ccc; --btn-bg: #f5f5f5; --btn-bg-active: #e0e0e0; --error: #c00; }
+    body {
+      margin: 0;
+      padding: 1rem;
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--btn-bg);
+    }
+    .card .label {
+      font-weight: 500;
+      font-size: 0.9375rem;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .card .buttons {
+      display: flex;
+      gap: 0.35rem;
+      width: 100%;
+      justify-content: center;
+    }
+    .card button {
+      flex: 1;
+      min-height: 44px;
+      min-width: 44px;
+      max-width: 52px;
+      padding: 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card button svg { width: 22px; height: 22px; fill: currentColor; }
+    .card button:active { background: var(--btn-bg-active); }
+    .card button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message {
+      padding: 1rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .message.error { color: var(--error); }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="message">Loading…</div>
+  </div>
+
+  <script>
+    const root = document.getElementById('root');
+    let channelNamesMap = {};
+    let channels = [];
+
+    function channelLabel(ch) {
+      return channelNamesMap[String(ch)] || 'Channel ' + ch;
+    }
+
+    async function fetchChannels() {
+      const res = await fetch('/channels');
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      return data.channels || [];
+    }
+
+    async function fetchChannelNames() {
+      try {
+        const res = await fetch('/channels/names');
+        if (res.ok) channelNamesMap = await res.json();
+      } catch {
+        channelNamesMap = {};
+      }
+    }
+
+    const iconUp = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>';
+    const iconStop = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+    const iconDown = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 20l8-8h-5V4h-6v8H4z"/></svg>';
+
+    async function load() {
+      root.innerHTML = '<div class="message">Loading…</div>';
+      try {
+        await fetchChannelNames();
+        channels = await fetchChannels();
+        if (channels.length === 0) {
+          root.innerHTML = '<div class="message">No channels learned. Check the stick.</div>';
+          return;
+        }
+        render();
+      } catch (err) {
+        root.innerHTML = '<div class="message error">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function render() {
+      root.innerHTML = '<div class="grid"></div>';
+      const grid = root.querySelector('.grid');
+      for (const ch of channels) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <span class="label">${escapeHtml(channelLabel(ch))}</span>
+          <div class="buttons">
+            <button type="button" data-channel="${ch}" data-action="top" title="Up" aria-label="Up">${iconUp}</button>
+            <button type="button" data-channel="${ch}" data-action="stop" title="Stop" aria-label="Stop">${iconStop}</button>
+            <button type="button" data-channel="${ch}" data-action="bottom" title="Down" aria-label="Down">${iconDown}</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+      root.querySelectorAll('button[data-channel][data-action]').forEach(btn => {
+        btn.addEventListener('click', onCommand);
+      });
+    }
+
+    async function onCommand(e) {
+      const btn = e.currentTarget;
+      const ch = btn.dataset.channel;
+      const action = btn.dataset.action;
+      if (!ch || !action) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/channels/' + ch + '/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      } catch (err) {
+        console.error(err);
+      }
+      setTimeout(() => { btn.disabled = false; }, 400);
+    }
+
+    load();
+  </script>
+</body>
+</html>
